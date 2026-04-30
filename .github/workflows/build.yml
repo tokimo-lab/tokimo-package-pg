@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       pg_version:
-        description: 'PostgreSQL version (git tag, e.g. REL_17_5)'
+        description: 'PostgreSQL version (git tag, e.g. REL_18_3)'
         required: true
-        default: 'REL_17_5'
+        default: 'REL_18_3'
       pgvector_version:
-        description: 'pgvector version (git tag, e.g. v0.8.0)'
+        description: 'pgvector version (git tag, e.g. v0.8.2)'
         required: true
-        default: 'v0.8.0'
+        default: 'v0.8.2'
       release_tag:
         description: 'Release tag name (e.g. pg17-vector08)'
         required: true
@@ -45,12 +45,12 @@ jobs:
     timeout-minutes: 90
 
     env:
-      PG_VERSION: ${{ inputs.pg_version || 'REL_17_5' }}
-      PGVECTOR_VERSION: ${{ inputs.pgvector_version || 'v0.8.0' }}
+      PG_VERSION: ${{ inputs.pg_version || 'REL_18_3' }}
+      PGVECTOR_VERSION: ${{ inputs.pgvector_version || 'v0.8.2' }}
       RELEASE_TAG: ${{ inputs.release_tag || 'latest' }}
       PG_INSTALL_DIR: ${{ github.workspace }}/pg-install
       PGDATA: ${{ runner.temp }}/pgdata
-      ARTIFACT_NAME: pg-${{ inputs.pg_version || 'REL_17_5' }}-${{ matrix.target }}
+      ARTIFACT_NAME: pg-${{ inputs.pg_version || 'REL_18_3' }}-${{ matrix.target }}
 
     steps:
       - name: Checkout
