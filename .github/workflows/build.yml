@@ -62,6 +62,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install meson ninja
+          choco install winflexbison3 --no-progress -y
 
       - name: Install OpenSSL (Windows)
         if: matrix.os == 'windows' && inputs.ssl == 'true'
@@ -137,9 +138,10 @@ jobs:
           initdb.exe -D $env:RUNNER_TEMP\pgdata --no-locale --encoding=UTF8 --auth=trust --username="$env:USERNAME"
 
           # Minimal postgresql.conf for testing
-          Add-Content "$env:RUNNER_TEMP\pgdata\postgresql.conf" "listen_addresses = ''"
+          Add-Content "$env:RUNNER_TEMP\pgdata\postgresql.conf" "listen_addresses = '127.0.0.1'"
           Add-Content "$env:RUNNER_TEMP\pgdata\postgresql.conf" "max_connections = 5"
           Add-Content "$env:RUNNER_TEMP\pgdata\postgresql.conf" "shared_preload_libraries = ''"
+          Add-Content "$env:RUNNER_TEMP\pgdata\pg_hba.conf" "host all all 127.0.0.1/32 trust"
 
           # Start PostgreSQL
           pg_ctl.exe start -D $env:RUNNER_TEMP\pgdata -l "$env:RUNNER_TEMP\pg.log" -w -t 30
@@ -152,19 +154,19 @@ jobs:
           }
 
           # Create test database
-          createdb.exe -h localhost -p 15432 -U "$env:USERNAME" testdb
+          createdb.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" testdb
 
           # Test pgvector extension
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE EXTENSION vector;"
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "SELECT '[1,2,3]'::vector;"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE EXTENSION vector;"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "SELECT '[1,2,3]'::vector;"
 
           # Functional test
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE TABLE items (id serial PRIMARY KEY, embedding vector(3));"
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]'), ('[2,3,4]');"
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "SELECT id, embedding, embedding <-> '[3,1,2]'::vector AS distance FROM items ORDER BY distance;"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE TABLE items (id serial PRIMARY KEY, embedding vector(3));"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]'), ('[2,3,4]');"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "SELECT id, embedding, embedding <-> '[3,1,2]'::vector AS distance FROM items ORDER BY distance;"
 
           # Verify index creation works
-          psql.exe -h localhost -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE INDEX ON items USING ivfflat (embedding vector_l2_ops) WITH (lists = 1);"
+          psql.exe -h 127.0.0.1 -p 15432 -U "$env:USERNAME" -d testdb -c "CREATE INDEX ON items USING ivfflat (embedding vector_l2_ops) WITH (lists = 1);"
 
           pg_ctl.exe stop -D $env:RUNNER_TEMP\pgdata -m fast
           Write-Host "All Windows tests passed!"
@@ -277,7 +279,7 @@ jobs:
 
           # Minimal postgresql.conf for testing
           cat >> "$RUNNER_TEMP/pgdata/postgresql.conf" <<'PGEOCONF'
-          listen_addresses = ''
+          listen_addresses = '127.0.0.1'
           max_connections = 5
           shared_preload_libraries = ''
           PGEOCONF
@@ -293,17 +295,17 @@ jobs:
           fi
 
           # Create test database
-          createdb -h localhost -p 15432 -U "$(whoami)" testdb
+          createdb -h 127.0.0.1 -p 15432 -U "$(whoami)" testdb
 
           # Test pgvector extension
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "CREATE EXTENSION vector;"
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "SELECT '[1,2,3]'::vector;"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "CREATE EXTENSION vector;"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "SELECT '[1,2,3]'::vector;"
 
           # Functional test
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "CREATE TABLE items (id serial PRIMARY KEY, embedding vector(3));"
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]'), ('[2,3,4]');"
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "SELECT id, embedding, embedding <-> '[3,1,2]'::vector AS distance FROM items ORDER BY distance;"
-          psql -h localhost -p 15432 -U "$(whoami)" -d testdb -c "CREATE INDEX ON items USING ivfflat (embedding vector_l2_ops) WITH (lists = 1);"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "CREATE TABLE items (id serial PRIMARY KEY, embedding vector(3));"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]'), ('[2,3,4]');"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "SELECT id, embedding, embedding <-> '[3,1,2]'::vector AS distance FROM items ORDER BY distance;"
+          psql -h 127.0.0.1 -p 15432 -U "$(whoami)" -d testdb -c "CREATE INDEX ON items USING ivfflat (embedding vector_l2_ops) WITH (lists = 1);"
 
           pg_ctl stop -D "$RUNNER_TEMP/pgdata" -m fast
           echo "All macOS tests passed!"
