@@ -91,7 +91,7 @@ jobs:
           @echo off
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" > nul
           cd pg-source
-          meson setup build --prefix=$installDir --buildtype=release $sslOpt -Dcassert=false -Dzlib=enabled -Dnls=disabled -Dplperl=disabled -Dpltcl=disabled -Dplpython=disabled -Dldap=disabled -Dgssapi=disabled -Dicu=disabled -Dllvm=disabled -Dselinux=disabled -Dsystemd=disabled -Duuid=none -Dreadline=disabled -Dlibedit_preferred=false -Dpgport=15432
+          meson setup build --prefix=$installDir --buildtype=release $sslOpt -Dcassert=false -Dzlib=disabled -Dnls=disabled -Dplperl=disabled -Dpltcl=disabled -Dplpython=disabled -Dldap=disabled -Dgssapi=disabled -Dicu=disabled -Dllvm=disabled -Dselinux=disabled -Dsystemd=disabled -Duuid=none -Dreadline=disabled -Dlibedit_preferred=false -Dpgport=15432
           if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
           ninja -C build
           if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
